@@ -3,6 +3,7 @@ package com.drsync.widgetwithcompose
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.*
@@ -12,13 +13,12 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.layout.Alignment
-import androidx.glance.layout.Column
-import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.*
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.drsync.widgetwithcompose.CounterWidget.countKey
 
 object CounterWidget : GlanceAppWidget() {
 
@@ -42,15 +42,22 @@ object CounterWidget : GlanceAppWidget() {
                     fontSize = 26.sp
                 )
             )
-            Button(
-                text = "Incr",
-                onClick = actionRunCallback(IncrementActionCallback::class.java)
-            )
+            Row(modifier = GlanceModifier.padding(16.dp)) {
+                Button(
+                    text = "Incr",
+                    onClick = actionRunCallback(IncrementActionCallback::class.java),
+                )
+                Spacer(modifier = GlanceModifier.width(16.dp))
+                Button(
+                    text = "Decr",
+                    onClick = actionRunCallback(DecrementActionCallback::class.java)
+                )
+            }
         }
     }
 }
 
-class SimpleCounterWidgetReceiver: GlanceAppWidgetReceiver() {
+class SimpleCounterWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget
         get() = CounterWidget
 }
@@ -62,11 +69,29 @@ class IncrementActionCallback : ActionCallback {
         parameters: ActionParameters
     ) {
         updateAppWidgetState(context, glanceId) { pref ->
-            val currentCount = pref[CounterWidget.countKey]
+            val currentCount = pref[countKey]
             if (currentCount != null) {
-                pref[CounterWidget.countKey] = currentCount + 1
+                pref[countKey] = currentCount + 1
             } else {
-                pref[CounterWidget.countKey] = 1
+                pref[countKey] = 1
+            }
+        }
+        CounterWidget.update(context, glanceId)
+    }
+}
+
+class DecrementActionCallback : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        updateAppWidgetState(context, glanceId) { pref ->
+            val currentCount = pref[countKey]
+            if(currentCount != null) {
+                pref[countKey] = currentCount - 1
+            } else {
+                pref[countKey] = -1
             }
         }
         CounterWidget.update(context, glanceId)
